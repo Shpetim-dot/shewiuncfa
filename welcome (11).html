@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shewiun: AI agents your security team can sign off</title>
+<meta name="description" content="A workspace where AI agents debate, remember and act, with per-agent permissions, quarantined memory, approvals and a tamper-evident audit log.">
+<style>
+:root{--bg:#fff;--soft:#F6F7F9;--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--accent:#2F5BD3}
+@media (prefers-color-scheme:dark){:root{--bg:#0B0F17;--soft:#10151F;--ink:#F1F5F9;--muted:#94A3B8;--line:#232C3B;--accent:#7FA2FF}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--accent)}.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+nav{display:flex;align-items:center;gap:18px;padding:16px 0}.logo{font-weight:800;font-size:22px;letter-spacing:-.035em;border-bottom:3px solid var(--accent)}.sp{flex:1}nav a{text-decoration:none;color:var(--muted)}
+.btn{display:inline-block;padding:11px 20px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;text-decoration:none;cursor:pointer}.btn.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+h1{font-size:clamp(34px,6vw,56px);line-height:1.08;letter-spacing:-.03em;margin:56px 0 16px}h2{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}.lead{font-size:19px;color:var(--muted);max-width:720px}
+section{padding:56px 0;border-top:1px solid var(--line)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:22px}
+.card{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:20px}.card b{display:block;margin-bottom:6px}.muted{color:var(--muted)}
+.price{font-size:32px;font-weight:700;letter-spacing:-.02em}.price small{font-size:15px;font-weight:400;color:var(--muted)}ul{padding-left:18px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:14px}td,th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+input,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;margin-bottom:10px}.hp{position:absolute;left:-9999px}
+.note{border-left:3px solid var(--accent);padding-left:14px;color:var(--muted)}footer{padding:30px 0;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><span class="logo">Shewiun</span><span class="sp"></span><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="/trust">Trust</a><a class="btn p" href="#pilot" data-track="cta_pilot">Request a pilot</a></nav>
+<h1>AI agents your security team can sign off.</h1>
+<p class="lead">Shewiun is a workspace where agents debate, remember and act, with per-agent permissions, quarantined memory, human approvals and a tamper-evident audit log. And a self-test that proves the boundaries hold.</p>
+<p><a class="btn p" href="#pilot" data-track="cta_pilot">Request a pilot</a> <a class="btn" href="/" data-track="cta_demo">Open the workspace</a></p>
+
+<section id="how"><h2>Why teams hesitate to put agents to work</h2>
+<p class="lead">An agent that can remember and call tools can also be manipulated: poisoned notes, hidden instructions in tool text, rights nobody reviewed. Shewiun makes those risks visible and enforceable.</p>
+<div class="grid">
+<div class="card"><b>Memory you can trust</b>Everything an agent learns arrives as a draft. Only what an admin verifies reaches a prompt. Instruction-like text is quarantined, every version is kept and can be rolled back.</div>
+<div class="card"><b>Rights per agent</b>Each agent has its own capabilities and its own tool grants. Write tools only create an approval request. Secret-looking tools can never be granted. One switch suspends every agent.</div>
+<div class="card"><b>Proof, not promises</b>The authorization self-test runs synthetic probes against the app's own enforcement and produces a report you can share with an auditor through a private link.</div>
+<div class="card"><b>Decisions with dissent</b>Agents answer independently first, then respond to each other. Disagreement stays in the record, together with a pre-mortem, kill criteria and a plan.</div>
+<div class="card"><b>Live monitors</b>Watch what an agent actually does: notes read, tools called, research steps, council turns. It is a live action log, not a remote desktop.</div>
+<div class="card"><b>Open models, your choice</b>Use any OpenAI-compatible endpoint, or open models through Hugging Face Inference Providers. Imported models start unverified with read-only rights.</div>
+</div></section>
+
+<section><h2>Start from a preset</h2><p class="lead">Pick what you are building and get a team of agents with sensible rights, a shared memory and a sample question.</p>
+<div class="grid"><div class="card"><b>Freelancer</b>Scout, Proposal Writer, Invoice Clerk</div><div class="card"><b>Startup founder</b>Strategist, Growth, Engineering, Skeptic CFO</div><div class="card"><b>Fintech risk desk</b>Ledger, Sentinel, Policy Analyst, Incident Lead</div><div class="card"><b>Security team</b>Threat Triage, Policy Reviewer, Red Team Planner</div><div class="card"><b>Developer</b>Code Reviewer, Architect, Test Engineer, Security Reviewer</div><div class="card"><b>Online shop, agency, researcher, contracts</b>and more</div></div></section>
+
+<section><h2>What the evidence looks like</h2><p class="lead">A sample from the demo workspace. Your report covers your agents and your tools.</p>
+<table><thead><tr><th>Probe</th><th>Expected</th><th>Result</th></tr></thead><tbody>
+<tr><td>Skeptic may use payments.propose</td><td>denied</td><td>pass</td></tr><tr><td>Ledger reads Scout's private memory space</td><td>hidden</td><td>pass</td></tr>
+<tr><td>Unverified draft reaches a prompt</td><td>hidden</td><td>pass</td></tr><tr><td>Instruction-like note reaches a prompt</td><td>hidden</td><td>pass</td></tr>
+<tr><td>Write tool executes without approval</td><td>approval required</td><td>pass</td></tr><tr><td>Suspended agent may chat</td><td>denied</td><td>pass</td></tr></tbody></table>
+<p class="note">The self-test checks this application's enforcement with synthetic data. It is not an audit or certification, and it does not test model behavior.</p></section>
+
+<section id="pricing"><h2>Pricing</h2><p class="lead">Launch prices. Start free, upgrade when you hit a limit.</p><div class="grid" id="plans"></div>
+<p class="muted">Plans apply per workspace. Every plan includes the four built-in council agents. The Pilot plan is invoiced and set up with you.</p></section>
+
+<section id="pilot"><h2>Request a pilot</h2><p class="lead">We set up a workspace with you, run the authorization test on your agents and send you the evidence report.</p>
+<form id="lead" style="max-width:520px;margin-top:18px"><input name="name" placeholder="Your name" required minlength="2" maxlength="80"><input name="email" type="email" placeholder="Work email" required maxlength="254"><input name="company" placeholder="Company" maxlength="120">
+<textarea name="message" rows="3" maxlength="1000" placeholder="What do you want to prove or protect?"></textarea><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+<button class="btn p" type="submit">Send request</button> <span id="lead-out" class="muted" role="status"></span></form></section>
+
+<section><h2>Honest answers</h2>
+<div class="grid"><div class="card"><b>Is there a SOC 2 report?</b>Not yet. See the <a href="/trust">trust page</a> for what is enforced today and what is not.</div>
+<div class="card"><b>Is it multi-tenant SaaS?</b>Today each customer runs an isolated workspace, which suits regulated teams. Multi-tenant hosting comes later.</div>
+<div class="card"><b>Can agents run code?</b>No. That is deliberate. Coding agents review code you paste in. Code execution needs an isolated runner we have not built.</div>
+<div class="card"><b>Where does my data go?</b>Into the workspace database you host. Prompts go to the model provider you configure.</div></div></section>
+<footer>Shewiun <span id="ver"></span> · <a href="/trust">Trust</a> · <a href="/">Open the workspace</a></footer>
+</div>
+<script src="/static/welcome.js"></script>
+</body>
+</html>

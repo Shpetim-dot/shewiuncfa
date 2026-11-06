@@ -1,0 +1,13 @@
+# Local production-like run:  docker compose up --build   (copy .env.example to .env first)
+services:
+  cfa:
+    build: .
+    ports: ["8000:8000"]
+    env_file: .env
+    environment:
+      CFA_DATABASE_PATH: /data/cfa.db
+      FORWARDED_ALLOW_IPS: "*"   # only behind a reverse proxy you control
+    volumes: ["cfa-data:/data"]
+    restart: unless-stopped
+volumes:
+  cfa-data:

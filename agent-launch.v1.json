@@ -1,0 +1,27 @@
+{
+  "id": "agent-launch", "version": 1,
+  "steps": [
+    {"id": "context", "title": "Context", "questions": [
+      {"id": "environment", "type": "single", "label": "Where will the agent run?", "options": [["pilot", "Pilot or internal test"], ["production", "Production with real customers"]]},
+      {"id": "purpose", "type": "text", "optional": true, "label": "What should the agent do?", "hint": "One or two sentences. Do not enter secrets, keys or customer data."}
+    ]},
+    {"id": "actions", "title": "Actions", "questions": [
+      {"id": "actions", "type": "multi", "label": "Which actions can the agent trigger?", "options": [["payments", "Send or approve payments"], ["refunds", "Issue refunds"], ["account_changes", "Change accounts or limits"], ["data_export", "Export customer data"], ["customer_messages", "Message customers"], ["infra_changes", "Change infrastructure"], ["none", "None of these"]]},
+      {"id": "writeAccess", "type": "tri", "label": "Does the agent have write access to any system?"}
+    ]},
+    {"id": "controls", "title": "Controls", "questions": [
+      {"id": "approval", "type": "single", "label": "When does a human approve an action?", "options": [["none", "Never"], ["above_threshold", "Above a threshold"], ["always", "Every action"], ["unknown", "I don't know"]]},
+      {"id": "amountLimits", "type": "tri", "label": "Are there hard limits on amounts or volume per action and per day?"},
+      {"id": "identity", "type": "single", "label": "Which identity does the agent use to call tools?", "options": [["agent_own", "Its own identity with scoped permissions"], ["shared_service_account", "A shared service account"], ["user_credentials", "The user's own credentials"], ["unknown", "I don't know"]]},
+      {"id": "killSwitch", "type": "tri", "label": "Can you stop the agent and revoke its access within minutes?"},
+      {"id": "auditLog", "type": "tri", "label": "Is every action logged with who, what and why?"},
+      {"id": "monitoring", "type": "tri", "label": "Do you get alerts on unusual agent behavior?"},
+      {"id": "incidentOwner", "type": "tri", "label": "Is one person accountable for agent incidents?"}
+    ]},
+    {"id": "inputs", "title": "Inputs", "questions": [
+      {"id": "untrustedInputs", "type": "multi", "label": "What untrusted content can reach the agent?", "options": [["emails", "Emails"], ["web", "Web pages"], ["tickets", "Support tickets"], ["documents", "Uploaded documents"], ["tool_outputs", "Outputs of other tools or agents"], ["none", "None"]]},
+      {"id": "injectionMitigations", "type": "tri", "label": "Is untrusted content isolated from the agent's instructions and tools?"},
+      {"id": "toolChaining", "type": "tri", "label": "Can the agent chain several tools or agents in one task?"}
+    ]}
+  ]
+}
