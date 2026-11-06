@@ -2,7 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "main.py": {
-      "includeFiles": "app/**"
+      "includeFiles": [
+        "*.py",
+        "static/**"
+      ]
     }
   }
 }
