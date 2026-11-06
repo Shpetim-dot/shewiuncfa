@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shewiun Trust</title>
+<style>:root{--bg:#fff;--soft:#F6F7F9;--ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--accent:#2F5BD3}@media (prefers-color-scheme:dark){:root{--bg:#0B0F17;--soft:#10151F;--ink:#F1F5F9;--muted:#94A3B8;--line:#232C3B;--accent:#7FA2FF}}
+body{margin:0;font:16px/1.6 ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--ink)}.wrap{max-width:820px;margin:0 auto;padding:24px 20px 80px}a{color:var(--accent)}
+.logo{font-weight:800;font-size:22px;letter-spacing:-.035em;border-bottom:3px solid var(--accent)}h1{font-size:34px;letter-spacing:-.02em;margin:34px 0 6px}h2{font-size:20px;margin:34px 0 8px}li{margin:5px 0}.muted{color:var(--muted)}
+.card{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:12px 0}</style></head>
+<body><div class="wrap"><a href="/welcome" class="logo" style="text-decoration:none;color:inherit">Shewiun</a>
+<h1>Trust</h1><p class="muted">What is true today, stated plainly. We will update this page when it changes.</p>
+<h2>What is enforced today</h2><ul>
+<li>Each agent has its own capabilities and tool grants; changes are admin-only and audited.</li>
+<li>Agent-written memory is a draft until an admin verifies it; instruction-like text is quarantined; every version is kept and can be rolled back.</li>
+<li>Write tools create an approval request and run only after a human approves; secret-looking tools can never be granted.</li>
+<li>A hash-linked audit log records decisions, denials and memory changes. It detects edits; it is not an external signature.</li>
+<li>Access keys are stored as hashes; MCP tokens are encrypted at rest; MCP addresses cannot point at internal networks.</li>
+<li>Security headers, request-size limits, rate limits, readiness checks and online backups.</li>
+<li>An authorization self-test with a shareable evidence report.</li></ul>
+<h2>What we do not have yet</h2><ul>
+<li>No SOC 2 or ISO 27001 report. We are not claiming one.</li>
+<li>No SSO or SAML; access uses tokens with roles.</li>
+<li>No multi-tenant hosting: each customer runs an isolated workspace.</li>
+<li>No independent penetration test report yet.</li>
+<li>Prompt-injection and memory-poisoning detection is pattern based, not semantic.</li></ul>
+<h2>Your data</h2><p>Workspace data lives in the database on the host you choose. Prompts go to the model provider you configure, under that provider's terms. This product does not train models on your data.</p>
+<h2>Sub-processors</h2><p class="muted">Depends on your deployment:</p><ul><li>Your hosting provider</li><li>Your model provider (an OpenAI-compatible endpoint or Hugging Face Inference Providers)</li><li>Stripe, only if you enable paid plans</li><li>Brave Search, only if you enable web research</li><li>The Simple Icons CDN for app logos, which you can switch off</li></ul>
+<h2>Security contact</h2><div class="card" id="contact">To report a vulnerability, contact the person who operates your workspace.</div>
+<h2>Security questionnaire</h2><p>We keep pre-written answers for common buyer questionnaires based on what the product does. Ask for them in a pilot request.</p>
+<p><a href="/welcome">Back to the overview</a></p></div><script src="/static/trust.js"></script></body></html>
