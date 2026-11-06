@@ -100,20 +100,32 @@
   const when = (t) => (t || '').slice(0, 16).replace('T', ' ');
   const botBy = (id) => S.bots.find((b) => b.id === id) || { color: '#5B6B88', icon: 'spark', name: id };
   const admin = (t) => h('p', { class: 'muted', style: 'font-size:12px' }, t);
-  const dl = async (path, name) => { const r = await fetch(path, { headers: token ? { Authorization: 'Bearer ' + token } : {} }); if (!r.ok) throw new Error(`Download failed (${r.status})`); h('a', { href: URL.createObjectURL(await r.blob()), download: name }).click(); };
+  const dl = async (path, name) => { const r = await fetch(path, { headers: token ? { Authorization: 'Bearer ' + token } : {}, credentials: 'same-origin' }); if (!r.ok) throw new Error(`Download failed (${r.status})`); h('a', { href: URL.createObjectURL(await r.blob()), download: name }).click(); };
+
+  // Session cookie auth needs a CSRF header; bearer tokens do not. Both are supported.
+  const cookie = (n) => { const m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)')); return m ? m[1] : ''; };
+  const authHeaders = (method) => {
+    const hd = { 'Content-Type': 'application/json' };
+    if (token) hd.Authorization = 'Bearer ' + token;
+    if (method && method !== 'GET') { const c = cookie('cfa_csrf'); if (c) hd['X-CSRF-Token'] = c; }
+    return hd;
+  };
+  const fail = async (r) => {
+    if (r.status === 401) { S.auth = true; throw new Error('Sign-in required'); }
+    let d = ''; try { d = (await r.json()).detail; } catch {}
+    if (d && typeof d === 'object' && d.code === 'limit_reached') { S.upsell = d; throw new Error(d.message); }
+    throw new Error(typeof d === 'string' && d ? d : `Request failed (${r.status})`);
+  };
 
   async function api(path, opt = {}) {
-    const headers = { 'Content-Type': 'application/json' }; if (token) headers.Authorization = 'Bearer ' + token;
-    const r = await fetch(path, { method: opt.method || 'GET', headers, body: opt.body ? JSON.stringify(opt.body) : undefined });
-    if (r.status === 401) { S.auth = true; throw new Error('Sign-in required'); }
-    if (!r.ok) { let d = ''; try { d = (await r.json()).detail; } catch {} if (d && typeof d === 'object' && d.code === 'limit_reached') { S.upsell = d; throw new Error(d.message); } throw new Error(typeof d === 'string' && d ? d : `Request failed (${r.status})`); }
+    const method = opt.method || 'GET';
+    const r = await fetch(path, { method, headers: authHeaders(method), credentials: 'same-origin', body: opt.body ? JSON.stringify(opt.body) : undefined });
+    if (!r.ok) await fail(r);
     return r.json();
   }
   async function stream(path, body, onEv) {
-    const headers = { 'Content-Type': 'application/json' }; if (token) headers.Authorization = 'Bearer ' + token;
-    const r = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body) });
-    if (r.status === 401) { S.auth = true; throw new Error('Sign-in required'); }
-    if (!r.ok) { let d = ''; try { d = (await r.json()).detail; } catch {} if (d && typeof d === 'object' && d.code === 'limit_reached') { S.upsell = d; throw new Error(d.message); } throw new Error(typeof d === 'string' && d ? d : `Request failed (${r.status})`); }
+    const r = await fetch(path, { method: 'POST', headers: authHeaders('POST'), credentials: 'same-origin', body: JSON.stringify(body) });
+    if (!r.ok) await fail(r);
     const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '';
     for (;;) {
       const { done, value } = await rd.read(); if (done) break; buf += dec.decode(value, { stream: true });
@@ -749,7 +761,7 @@
   }
   // live agent screen
   async function streamGet(path, signal, onEv) {
-    const r = await fetch(path, { headers: token ? { Authorization: 'Bearer ' + token } : {}, signal });
+    const r = await fetch(path, { headers: token ? { Authorization: 'Bearer ' + token } : {}, credentials: 'same-origin', signal });
     if (r.status === 401) { S.auth = true; return; } if (!r.ok) throw new Error('stream failed');
     const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '';
     for (;;) { const { done, value } = await rd.read(); if (done) break; buf += dec.decode(value, { stream: true }); let i; while ((i = buf.indexOf('\n\n')) >= 0) { const chunk = buf.slice(0, i); buf = buf.slice(i + 2); const line = chunk.split('\n').find((l) => l.startsWith('data: ')); if (line) onEv(JSON.parse(line.slice(6))); } }
@@ -770,15 +782,44 @@
     }
     paintScreen();
   }
-  // sign-in
-  async function signIn(t) { token = t.trim(); sessionStorage.setItem('cfa_token', token); S.auth = false; S.tokenErr = ''; await init(); }
-  function loginView() {
-    const inp = h('input', { class: 'field', type: 'password', placeholder: 'Access token', autocomplete: 'current-password', 'aria-label': 'Access token' });
-    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(inp.value); });
-    return h('div', { class: 'login' }, h('div', { class: 'card login-card' }, h('div', { class: 'logo' }, 'Shewiun'), h('h2', { style: 'margin-top:18px' }, 'Sign in'), h('p', { class: 'muted' }, 'This workspace is protected. Enter the access token your admin gave you.'),
-      inp, S.tokenErr ? h('p', { class: 'warn-text', role: 'alert' }, S.tokenErr) : null, h('div', { class: 'row2', style: 'margin-top:12px' }, btn('Sign in', () => signIn(inp.value), 'btn primary')),
-      h('p', { class: 'muted', style: 'font-size:12px;margin-top:16px' }, 'No token? Ask the person who set up this workspace. Tokens are set with CFA_API_KEYS.')));
+  // sign-in / first-run setup
+  async function submitAuth(kind) {
+    const email = (document.getElementById('auth-email') || {}).value || '';
+    const password = (document.getElementById('auth-password') || {}).value || '';
+    const name = (document.getElementById('auth-name') || {}).value || '';
+    const org = (document.getElementById('auth-org') || {}).value || '';
+    S.tokenErr = '';
+    const body = kind === 'register' ? { email, password, name, org_name: org } : { email, password };
+    try {
+      const r = await fetch(kind === 'register' ? '/api/auth/register' : '/api/auth/login',
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body) });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); S.tokenErr = typeof d.detail === 'string' ? d.detail : 'Sign-in failed'; render(); return; }
+      S.auth = false; S.setup = false; token = ''; sessionStorage.removeItem('cfa_token');
+      await init();
+    } catch (e) { S.tokenErr = e.message; render(); }
   }
+  function loginView() {
+    if (S.setup) {
+      const email = h('input', { class: 'field', id: 'auth-email', type: 'email', placeholder: 'you@company.com', autocomplete: 'email', 'aria-label': 'Email' });
+      const name = h('input', { class: 'field', id: 'auth-name', type: 'text', placeholder: 'Your name', autocomplete: 'name', 'aria-label': 'Your name' });
+      const org = h('input', { class: 'field', id: 'auth-org', type: 'text', placeholder: 'Organisation (e.g. Acme)', 'aria-label': 'Organisation' });
+      const pw = h('input', { class: 'field', id: 'auth-password', type: 'password', placeholder: 'At least 10 characters', autocomplete: 'new-password', 'aria-label': 'Password' });
+      [email, name, org, pw].forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAuth('register'); }));
+      return h('div', { class: 'login' }, h('div', { class: 'card login-card' }, h('div', { class: 'logo' }, 'Shewiun'),
+        h('h2', { style: 'margin-top:18px' }, 'Create your workspace'),
+        h('p', { class: 'muted' }, 'This is the first start of this installation. The account you create now owns the organisation.'),
+        email, name, org, pw, S.tokenErr ? h('p', { class: 'warn-text', role: 'alert' }, S.tokenErr) : null,
+        h('div', { class: 'row2', style: 'margin-top:12px' }, btn('Create workspace', () => submitAuth('register'), 'btn primary')),
+        h('p', { class: 'muted', style: 'font-size:12px;margin-top:16px' }, 'Passwords are hashed with Argon2id. Invite teammates later from Settings.')));
+    }
+    const email = h('input', { class: 'field', id: 'auth-email', type: 'email', placeholder: 'you@company.com', autocomplete: 'username', 'aria-label': 'Email' });
+    const pw = h('input', { class: 'field', id: 'auth-password', type: 'password', placeholder: 'Password', autocomplete: 'current-password', 'aria-label': 'Password' });
+    [email, pw].forEach((i) => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAuth('login'); }));
+    return h('div', { class: 'login' }, h('div', { class: 'card login-card' }, h('div', { class: 'logo' }, 'Shewiun'), h('h2', { style: 'margin-top:18px' }, 'Sign in'), h('p', { class: 'muted' }, 'Use the email address and password of your Shewiun account.'),
+      email, pw, S.tokenErr ? h('p', { class: 'warn-text', role: 'alert' }, S.tokenErr) : null, h('div', { class: 'row2', style: 'margin-top:12px' }, btn('Sign in', () => submitAuth('login'), 'btn primary')),
+      h('p', { class: 'muted', style: 'font-size:12px;margin-top:16px' }, 'Forgot your password? Ask an admin to send a reset link, or use the API: POST /api/auth/password/forgot.')));
+  }
+  const logout = async () => { try { await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders('POST'), credentials: 'same-origin' }); } catch {} sessionStorage.removeItem('cfa_token'); token = ''; S.auth = true; location.reload(); };
   const refreshSum = async () => { try { S.sum = await api('/api/summary'); if (S.drawer) render(); } catch {} };
   // menu
   function drawer() {
@@ -808,9 +849,9 @@
       meterBlock(),
       h('button', { class: 'appsbtn', type: 'button', onclick: openApps }, icon('grid', 20), h('span', { style: 'flex:1' }, 'Connect apps', h('small', {}, `${S.sum.apps || 0} connected · MCP`)), h('span', { class: 'chip ok' }, 'MCP')),
       h('div', { style: 'position:relative' }, S.menu ? h('div', { class: 'pop', role: 'menu' }, btn([icon('chart', 16), 'Plans & usage'], () => go('plans'), 'menuitem'), btn([icon('wrench', 16), 'Settings'], () => go('settings'), 'menuitem'), btn([icon('flask', 16), 'Authorization self-test'], () => go('control'), 'menuitem'), btn([icon('table', 16), 'Agent inventory'], () => go('inventory'), 'menuitem'), btn([icon('grid', 16), 'Apps'], openApps, 'menuitem'),
-        btn([icon('spark', 16), 'Load demo workspace'], loadDemo, 'menuitem'), btn([icon('x', 16), 'Sign out'], () => { sessionStorage.removeItem('cfa_token'); token = ''; location.reload(); }, 'menuitem')) : null,
+        btn([icon('spark', 16), 'Load demo workspace'], loadDemo, 'menuitem'), btn([icon('x', 16), 'Sign out'], logout, 'menuitem')) : null,
         h('button', { class: 'acct', type: 'button', 'aria-expanded': S.menu, onclick: () => { S.menu = !S.menu; render(); } }, h('span', { class: 'tile', style: 'width:34px;height:34px;background:var(--accent);color:var(--on-accent)' }, icon('user', 18)),
-          h('span', {}, 'Workspace owner', h('small', {}, hd.auth === 'enabled' ? 'Access token required' : 'Open dev mode, no login'), h('small', {}, hd.model_configured ? 'Model connected' : 'No model, demo replies'), h('small', {}, `v${hd.version || '?'}${hd.build ? ' · ' + hd.build : ''}`)))));
+          h('span', {}, (S.me && S.me.org ? S.me.org.name : 'Workspace owner'), h('small', {}, S.me && S.me.user ? S.me.user.email + ' · ' + S.me.role : (hd.auth === 'enabled' ? 'Signed in' : 'Open dev mode, no login')), h('small', {}, hd.model_configured ? 'Model connected' : 'No model, demo replies'), h('small', {}, `v${hd.version || '?'}${hd.build ? ' · ' + hd.build : ''}`)))));
     const view = { chat: chatView, council: councilView, brain: brainView, research: researchView, teams: teamsView, inventory: inventoryView, usage: usageView, market: marketView, control: controlView, plans: plansView, settings: settingsView }[S.view]();
     const hasPanel = S.view === 'chat' && S.panel && S.bot, warn = (hd.warnings || []).length && S.view === 'chat' && !S.err && !S.info;
     root.replaceChildren(h('div', { class: 'shell' + (hasPanel ? ' has-panel' : '') }, side,
@@ -823,11 +864,17 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (S.modal) close(); else if (S.drawer) { S.drawer = false; render(); } } });
   async function init() {
     S.err = '';
+    try {
+      const st = await api('/api/auth/status');
+      S.setup = !!st.setup_required;
+      if (st.auth_required) { S.me = await api('/api/auth/me').catch(() => null); }
+    } catch (e) { S.err = e.message; }
     try { S.health = await api('/api/health'); } catch (e) { S.err = e.message; }
+    if (S.auth) { render(); return; }
     try {
       S.bots = await api('/api/bots'); S.bot = S.bots[0]; const t = await api('/api/templates'); S.caps = (t.find((x) => x.capabilities) || {}).capabilities || [];
       S.msgs = await api(`/api/bots/${S.bot.id}/messages`); await Promise.all([loadNotes(), loadApps(), loadTeams(), api('/api/calls').then((c) => { S.calls = c; }), api('/api/selftest/latest').then((x) => { S.test = x; }), api('/api/summary').then((x) => { S.sum = x; }), api('/api/billing').then((x) => { S.bill = x; }), api('/api/onboarding').then((x) => { S.onb = x; }), api('/api/presets').then((x) => { S.presets = x; })]);
-    } catch (e) { if (S.auth) { S.err = ''; S.tokenErr = token ? 'That token was not accepted.' : ''; } else S.err = e.message; }
+    } catch (e) { if (S.auth) { S.err = ''; S.tokenErr = S.setup ? '' : 'Please sign in again.'; } else S.err = e.message; }
     if (S.onb && S.onb.suggest && !S.skipOnb && S.bots.length <= 4 && !S.auth) S.modal = 'onboard';
     if (/billing=success/.test(location.search)) { S.info = 'Thank you! Your plan updates in a few seconds.'; setTimeout(() => api('/api/billing').then((x) => { S.bill = x; render(); }).catch(() => {}), 3500); }
     render();

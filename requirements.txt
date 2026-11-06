@@ -4,3 +4,4 @@ httpx>=0.27,<1.0
 python-dotenv>=1.0,<2.0
 cryptography>=42
 pypdf>=4
+argon2-cffi>=23.1,<26
